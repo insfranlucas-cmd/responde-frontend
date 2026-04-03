@@ -45,7 +45,7 @@ const inputCls = `w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3
 
 const textareaCls = `${inputCls} resize-none`;
 
-export default function ProfileScreen({ accessCode, initialProfile, onSaved, onSkip }) {
+export default function ProfileScreen({ accessCode, initialProfile, welcome, onSaved, onSkip }) {
   const [form, setForm] = useState({
     nombre:            initialProfile?.nombre            || '',
     rubro:             initialProfile?.rubro             || '',
@@ -125,6 +125,17 @@ export default function ProfileScreen({ accessCode, initialProfile, onSaved, onS
           </button>
         )}
       </div>
+
+      {/* Banner bienvenida primera vez */}
+      {welcome?.type === 'first' && (
+        <div className="bg-brand/10 border border-brand/30 rounded-xl px-4 py-3 mb-5">
+          <p className="text-brand font-semibold text-sm">¡Bienvenido al piloto de RESPONDE!</p>
+          <p className="text-zinc-300 text-sm mt-0.5">
+            Tenés <strong>{welcome.remaining}</strong> generaciones disponibles.
+            Empezá completando el perfil de tu negocio.
+          </p>
+        </div>
+      )}
 
       {/* Title */}
       <div className="mb-5">

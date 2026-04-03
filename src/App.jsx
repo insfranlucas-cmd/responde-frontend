@@ -9,9 +9,10 @@ const SESSION_KEY = 'responde_session';
 const PROFILE_KEY = 'responde_profile';
 
 export default function App() {
-  const [screen, setScreen] = useState('loading'); // loading | login | profile | generate
-  const [session, setSession] = useState(null);    // { accessCode, data }
+  const [screen, setScreen]   = useState('loading');
+  const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [welcome, setWelcome] = useState(null); // { type: 'first'|'returning', remaining }
 
   useEffect(() => {
     const savedSession = localStorage.getItem(SESSION_KEY);
@@ -23,16 +24,18 @@ export default function App() {
       const cachedProfile = localStorage.getItem(PROFILE_KEY);
       if (cachedProfile) {
         setProfile(JSON.parse(cachedProfile));
+        setWelcome({ type: 'returning', remaining: s.data.usage.remaining });
         setScreen('generate');
       } else {
-        // Fetch profile from backend
         getProfile(s.accessCode)
           .then(p => {
             if (p) {
               localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
               setProfile(p);
+              setWelcome({ type: 'returning', remaining: s.data.usage.remaining });
               setScreen('generate');
             } else {
+              setWelcome({ type: 'first', remaining: s.data.usage.remaining });
               setScreen('profile');
             }
           })
@@ -54,12 +57,17 @@ export default function App() {
         if (p) {
           localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
           setProfile(p);
+          setWelcome({ type: 'returning', remaining: data.usage.remaining });
           setScreen('generate');
         } else {
+          setWelcome({ type: 'first', remaining: data.usage.remaining });
           setScreen('profile');
         }
       })
-      .catch(() => setScreen('profile'));
+      .catch(() => {
+        setWelcome({ type: 'first', remaining: data.usage.remaining });
+        setScreen('profile');
+      });
   }
 
   function handleProfileSaved(savedProfile) {
@@ -68,41 +76,34 @@ export default function App() {
     setScreen('generate');
   }
 
-  function handleEditProfile() {
-    setScreen('profile');
-  }
-
   function handleLogout() {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(PROFILE_KEY);
     setSession(null);
     setProfile(null);
+    setWelcome(null);
     setScreen('login');
   }
 
   if (screen === 'loading') return null;
-
-  if (screen === 'login') {
-    return <LoginScreen onLogin={handleLogin} />;
-  }
-
-  if (screen === 'profile') {
-    return (
-      <ProfileScreen
-        accessCode={session.accessCode}
-        initialProfile={profile}
-        onSaved={handleProfileSaved}
-        onSkip={profile ? () => setScreen('generate') : null}
-      />
-    );
-  }
+  if (screen === 'login')   return <LoginScreen onLogin={handleLogin} />;
+  if (screen === 'profile') return (
+    <ProfileScreen
+      accessCode={session.accessCode}
+      initialProfile={profile}
+      welcome={welcome}
+      onSaved={handleProfileSaved}
+      onSkip={profile ? () => setScreen('generate') : null}
+    />
+  );
 
   return (
     <GenerateScreen
       accessCode={session.accessCode}
       initialData={session.data}
       profile={profile}
-      onEditProfile={handleEditProfile}
+      welcome={welcome}
+      onEditProfile={() => setScreen('profile')}
       onLogout={handleLogout}
     />
   );

@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { generateResponse } from '../api';
 import UsageBar from './UsageBar';
+import ReportButton from './ReportButton';
 
-export default function GenerateScreen({ accessCode, initialData, profile, onEditProfile, onLogout }) {
+export default function GenerateScreen({ accessCode, initialData, profile, welcome, onEditProfile, onLogout }) {
   const [mensaje, setMensaje] = useState('');
   const [respuesta, setRespuesta] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [usage, setUsage] = useState(initialData.usage);
+  const [showWelcome, setShowWelcome] = useState(!!welcome);
 
   async function handleGenerate(e) {
     e.preventDefault();
@@ -68,6 +70,19 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
           </button>
         </div>
       </div>
+
+      {/* Banner bienvenida */}
+      {showWelcome && welcome?.type === 'returning' && (
+        <div className="flex items-start justify-between bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 mb-4">
+          <div>
+            <p className="text-white text-sm font-medium">Bienvenido de nuevo a RESPONDE</p>
+            <p className="text-zinc-400 text-xs mt-0.5">
+              Te quedan <strong className="text-white">{welcome.remaining}</strong> generaciones disponibles.
+            </p>
+          </div>
+          <button onClick={() => setShowWelcome(false)} className="text-zinc-600 hover:text-zinc-400 text-lg leading-none ml-3">×</button>
+        </div>
+      )}
 
       {/* Perfil chip */}
       <button
@@ -144,6 +159,7 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
         </div>
       )}
 
+      <ReportButton accessCode={accessCode} />
     </div>
   );
 }

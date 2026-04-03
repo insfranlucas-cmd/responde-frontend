@@ -1,13 +1,13 @@
 export default function UsageBar({ usage, plan }) {
   const { used, limit, remaining } = usage;
   const pct = Math.min((used / limit) * 100, 100);
-  const almostFull = remaining <= 1;
+  const almostFull = remaining <= 10;
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 space-y-2">
       <div className="flex justify-between items-center text-xs">
         <span className="text-zinc-400">
-          Uso diario · <span className="text-zinc-300 font-medium">{plan}</span>
+          Generaciones del piloto · <span className="text-zinc-300 font-medium">{plan}</span>
         </span>
         <span className={almostFull ? 'text-red-400 font-medium' : 'text-zinc-300'}>
           {remaining} restante{remaining !== 1 ? 's' : ''}
@@ -20,7 +20,7 @@ export default function UsageBar({ usage, plan }) {
         />
       </div>
       <p className="text-xs text-zinc-600">
-        {used} de {limit} consultas usadas hoy
+        {used} de {limit} generaciones usadas
       </p>
     </div>
   );
