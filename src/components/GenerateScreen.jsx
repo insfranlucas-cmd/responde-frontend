@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { generateResponse } from '../api';
 import UsageBar from './UsageBar';
 
-export default function GenerateScreen({ accessCode, initialData, onLogout }) {
+export default function GenerateScreen({ accessCode, initialData, profile, onEditProfile, onLogout }) {
   const [mensaje, setMensaje] = useState('');
   const [respuesta, setRespuesta] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,9 @@ export default function GenerateScreen({ accessCode, initialData, onLogout }) {
       setRespuesta(data.respuesta);
       setUsage(data.usage);
     } catch (err) {
-      if (err.message.includes('límite') || err.message.includes('Límite')) {
+      if (err.message === 'perfil_requerido') {
+        onEditProfile();
+      } else if (err.message.toLowerCase().includes('límite')) {
         setError('Alcanzaste el límite diario. Volvé mañana a las 00:00 (Paraguay).');
       } else {
         setError(err.message || 'Error al generar. Intentá de nuevo.');
@@ -66,6 +68,20 @@ export default function GenerateScreen({ accessCode, initialData, onLogout }) {
           </button>
         </div>
       </div>
+
+      {/* Perfil chip */}
+      <button
+        onClick={onEditProfile}
+        className="flex items-center justify-between w-full bg-zinc-900 border border-zinc-800
+                   hover:border-zinc-700 rounded-xl px-4 py-3 mb-4 transition-colors group"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-brand text-xs">●</span>
+          <span className="text-zinc-300 text-sm font-medium">{profile?.nombre || 'Sin perfil'}</span>
+          <span className="text-zinc-600 text-xs">{profile?.rubro}</span>
+        </div>
+        <span className="text-zinc-600 group-hover:text-zinc-400 text-xs transition-colors">Editar</span>
+      </button>
 
       {/* Usage bar */}
       <div className="mb-5">
