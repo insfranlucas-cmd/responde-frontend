@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { generateResponse } from '../api';
 import UsageBar from './UsageBar';
 import ReportButton from './ReportButton';
@@ -10,6 +10,7 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const respuestaRef = useRef(null);
   const [usage, setUsage] = useState(initialData.usage);
   const [showWelcome, setShowWelcome] = useState(!!welcome);
   const [showProfileBanner, setShowProfileBanner] = useState(() => {
@@ -42,11 +43,12 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
       });
       setRespuesta(data.respuesta);
       setUsage(data.usage);
+      setTimeout(() => respuestaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } catch (err) {
       if (err.message === 'perfil_requerido') {
         onEditProfile();
       } else if (err.message.toLowerCase().includes('límite')) {
-        setError('Alcanzaste el límite diario. Volvé mañana a las 00:00 (Paraguay).');
+        setError('Usaste todas tus generaciones del piloto. Escribinos por WhatsApp para continuar.');
       } else {
         setError(err.message || 'Error al generar. Intentá de nuevo.');
       }
@@ -206,28 +208,28 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
 
       {/* Response */}
       {respuesta && (
-        <div aria-label="Respuesta generada" className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+        <div ref={respuestaRef} aria-label="Respuesta generada" className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <div className="px-4 pt-3 pb-1">
             <span className="text-xs font-medium text-zinc-400">Respuesta generada</span>
-            <div className="flex items-center gap-3">
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(respuesta)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs font-medium text-green-500 hover:text-green-400 transition-colors"
-              >
-                WhatsApp ↗
-              </a>
-              <button
-                onClick={handleCopy}
-                className="text-xs font-medium text-brand hover:text-brand-dark transition-colors"
-              >
-                {copied ? '✓ Copiado' : 'Copiar'}
-              </button>
-            </div>
           </div>
           <div className="px-4 py-4">
             <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{respuesta}</p>
+          </div>
+          <div className="px-4 pb-4 space-y-2">
+            <button
+              onClick={handleCopy}
+              className="w-full bg-brand hover:bg-brand-dark text-black font-semibold rounded-xl py-3 text-sm transition-colors"
+            >
+              {copied ? '✓ Copiado' : 'Copiar respuesta'}
+            </button>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(respuesta)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="block w-full bg-transparent border border-green-600 text-green-500 font-semibold rounded-xl py-3 text-sm text-center transition-colors hover:bg-green-950"
+            >
+              Abrir en WhatsApp
+            </a>
           </div>
         </div>
       )}
