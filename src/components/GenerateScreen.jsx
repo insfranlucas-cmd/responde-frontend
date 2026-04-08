@@ -5,12 +5,22 @@ import ReportButton from './ReportButton';
 
 export default function GenerateScreen({ accessCode, initialData, profile, welcome, onEditProfile, onLogout }) {
   const [mensaje, setMensaje] = useState('');
+  const [contexto, setContexto] = useState('');
   const [respuesta, setRespuesta] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [usage, setUsage] = useState(initialData.usage);
   const [showWelcome, setShowWelcome] = useState(!!welcome);
+  const [showProfileBanner, setShowProfileBanner] = useState(() => {
+    const p = profile || {};
+    const filled = [
+      p.nombre, p.rubro, p.descripcion, p.horarios, p.pagos,
+    ].filter(v => typeof v === 'string' && v.trim().length > 0).length
+      + (Array.isArray(p.preguntas_frecuentes) && p.preguntas_frecuentes.length > 0 ? 1 : 0)
+      + (Array.isArray(p.items) && p.items.length > 0 ? 1 : 0);
+    return filled < 5;
+  });
 
   async function handleGenerate(e) {
     e.preventDefault();
@@ -21,11 +31,14 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
     setRespuesta('');
     setCopied(false);
 
+    const extension = 'corta';
+
     try {
       const data = await generateResponse(accessCode, {
         mensaje: mensaje.trim(),
-        tono: 'profesional',
-        extension: 'corta',
+        tono: profile?.tono_respuesta || 'cercano',
+        extension,
+        ...(contexto.trim() && { contexto_adicional: contexto.trim() }),
       });
       setRespuesta(data.respuesta);
       setUsage(data.usage);
@@ -50,10 +63,10 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
   }
 
   return (
-    <div className="min-h-screen flex flex-col px-4 py-6 max-w-lg mx-auto w-full">
+    <main id="main-content" className="min-h-screen flex flex-col px-4 py-6 max-w-lg mx-auto w-full">
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <header className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center">
             <span className="text-black text-sm font-bold">R</span>
@@ -69,7 +82,7 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
             Salir
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Banner bienvenida */}
       {showWelcome && welcome?.type === 'returning' && (
@@ -98,6 +111,27 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
         <span className="text-zinc-600 group-hover:text-zinc-400 text-xs transition-colors">Editar</span>
       </button>
 
+      {/* Banner: perfil incompleto */}
+      {showProfileBanner && (
+        <div className="flex items-center justify-between bg-yellow-950/60 border border-yellow-800/60
+                        rounded-xl px-4 py-3 mb-4 gap-3">
+          <p className="text-yellow-200 text-xs leading-snug flex-1">
+            🚀 <strong>Mejorá tus respuestas</strong> — Completá tu perfil para que la IA conozca mejor tu negocio
+          </p>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={onEditProfile}
+              className="bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-semibold
+                         px-3 py-1.5 rounded-lg transition-colors">
+              Completar →
+            </button>
+            <button onClick={() => setShowProfileBanner(false)}
+              className="text-yellow-700 hover:text-yellow-500 text-lg leading-none transition-colors">
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Usage bar */}
       <div className="mb-5">
         <UsageBar usage={usage} plan={initialData.plan} />
@@ -106,10 +140,11 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
       {/* Input form */}
       <form onSubmit={handleGenerate} className="space-y-3 mb-5">
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-2">
+          <label htmlFor="gen-mensaje" className="block text-sm font-medium text-zinc-300 mb-2">
             Mensaje del cliente
           </label>
           <textarea
+            id="gen-mensaje"
             value={mensaje}
             onChange={e => setMensaje(e.target.value)}
             placeholder="Pegá o escribí el mensaje que recibiste por WhatsApp..."
@@ -121,6 +156,32 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
                        transition-colors"
           />
           <p className="text-right text-xs text-zinc-600 mt-1">{mensaje.length}/500</p>
+        </div>
+
+        <div className="flex items-center gap-3 my-1">
+          <div className="flex-1 h-px bg-zinc-800"></div>
+          <span className="text-zinc-600 text-xs">+ agregá contexto para respuestas más precisas</span>
+          <div className="flex-1 h-px bg-zinc-800"></div>
+        </div>
+
+        <div>
+          <label htmlFor="gen-contexto" className="block text-sm font-medium text-zinc-300 mb-1">
+            ⚡ Contexto del momento
+          </label>
+          <p className="text-zinc-500 text-xs mb-2">La IA prioriza esto sobre todo lo del perfil. Stock de hoy, precios actuales, promociones activas, excepciones. Escribí como quieras.</p>
+          <textarea
+            id="gen-contexto"
+            value={contexto}
+            onChange={e => setContexto(e.target.value)}
+            placeholder={"Ej: tenemos el Nike Air Force 1 blanco talle 42 a 350mil, sin talle 40. Hacemos envíos hoy hasta las 18hs. Aceptamos Tigo Money."}
+            maxLength={500}
+            rows={3}
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3
+                       text-white placeholder-zinc-600 text-sm resize-none
+                       focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand
+                       transition-colors"
+          />
+          <p className="text-right text-xs text-zinc-600 mt-1">{contexto.length}/500</p>
         </div>
 
         <button
@@ -135,23 +196,35 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
       </form>
 
       {/* Error */}
-      {error && (
-        <div className="bg-red-950 border border-red-800 rounded-xl px-4 py-3 mb-4">
-          <p className="text-red-400 text-sm">{error}</p>
-        </div>
-      )}
+      <div role="alert" aria-live="polite">
+        {error && (
+          <div className="bg-red-950 border border-red-800 rounded-xl px-4 py-3 mb-4">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+      </div>
 
       {/* Response */}
       {respuesta && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+        <div aria-label="Respuesta generada" className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
             <span className="text-xs font-medium text-zinc-400">Respuesta generada</span>
-            <button
-              onClick={handleCopy}
-              className="text-xs font-medium text-brand hover:text-brand-dark transition-colors"
-            >
-              {copied ? '✓ Copiado' : 'Copiar'}
-            </button>
+            <div className="flex items-center gap-3">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(respuesta)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-medium text-green-500 hover:text-green-400 transition-colors"
+              >
+                WhatsApp ↗
+              </a>
+              <button
+                onClick={handleCopy}
+                className="text-xs font-medium text-brand hover:text-brand-dark transition-colors"
+              >
+                {copied ? '✓ Copiado' : 'Copiar'}
+              </button>
+            </div>
           </div>
           <div className="px-4 py-4">
             <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{respuesta}</p>
@@ -160,6 +233,6 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
       )}
 
       <ReportButton accessCode={accessCode} />
-    </div>
+    </main>
   );
 }
