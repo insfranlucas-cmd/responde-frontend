@@ -13,6 +13,7 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
   const respuestaRef = useRef(null);
   const [usage, setUsage] = useState(initialData.usage);
   const [showWelcome, setShowWelcome] = useState(!!welcome);
+  const [showContexto, setShowContexto] = useState(false);
   const [showProfileBanner, setShowProfileBanner] = useState(() => {
     const p = profile || {};
     const filled = [
@@ -102,15 +103,11 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
       {/* Perfil chip */}
       <button
         onClick={onEditProfile}
-        className="flex items-center justify-between w-full bg-zinc-900 border border-zinc-800
-                   hover:border-zinc-700 rounded-xl px-4 py-3 mb-4 transition-colors group"
+        className="w-full bg-zinc-900 border border-zinc-700 hover:border-zinc-600
+                   rounded-xl px-4 py-3 mb-4 text-left transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <span className="text-brand text-xs">●</span>
-          <span className="text-zinc-300 text-sm font-medium">{profile?.nombre || 'Sin perfil'}</span>
-          <span className="text-zinc-600 text-xs">{profile?.rubro}</span>
-        </div>
-        <span className="text-zinc-600 group-hover:text-zinc-400 text-xs transition-colors">Editar</span>
+        <p className="text-sm font-medium text-zinc-300">✏ Editar perfil de mi negocio</p>
+        <p className="text-xs text-zinc-500 mt-0.5">{profile?.nombre || 'Sin perfil configurado'}</p>
       </button>
 
       {/* Banner: perfil incompleto */}
@@ -142,6 +139,7 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
       {/* Input form */}
       <form onSubmit={handleGenerate} className="space-y-3 mb-5">
         <div>
+          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Paso 1 — Mensaje del cliente</p>
           <label htmlFor="gen-mensaje" className="block text-sm font-medium text-zinc-300 mb-2">
             Mensaje del cliente
           </label>
@@ -160,31 +158,36 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
           <p className="text-right text-xs text-zinc-600 mt-1">{mensaje.length}/500</p>
         </div>
 
-        <div className="flex items-center gap-3 my-1">
-          <div className="flex-1 h-px bg-zinc-800"></div>
-          <span className="text-zinc-600 text-xs">+ agregá contexto para respuestas más precisas</span>
-          <div className="flex-1 h-px bg-zinc-800"></div>
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowContexto(v => !v)}
+          className="text-zinc-500 text-sm hover:text-zinc-300 transition-colors"
+        >
+          {showContexto ? '− Ocultar contexto' : '+ Agregar contexto del momento (opcional)'}
+        </button>
 
-        <div>
-          <label htmlFor="gen-contexto" className="block text-sm font-medium text-zinc-300 mb-1">
-            ⚡ Contexto del momento
-          </label>
-          <p className="text-zinc-500 text-xs mb-2">La IA prioriza esto sobre todo lo del perfil. Stock de hoy, precios actuales, promociones activas, excepciones. Escribí como quieras.</p>
-          <textarea
-            id="gen-contexto"
-            value={contexto}
-            onChange={e => setContexto(e.target.value)}
-            placeholder={"Ej: tenemos el Nike Air Force 1 blanco talle 42 a 350mil, sin talle 40. Hacemos envíos hoy hasta las 18hs. Aceptamos Tigo Money."}
-            maxLength={500}
-            rows={3}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3
-                       text-white placeholder-zinc-600 text-sm resize-none
-                       focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand
-                       transition-colors"
-          />
-          <p className="text-right text-xs text-zinc-600 mt-1">{contexto.length}/500</p>
-        </div>
+        {showContexto && (
+          <div>
+            <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 mt-3">Paso 2 — Contexto del momento</p>
+            <label htmlFor="gen-contexto" className="block text-sm font-medium text-zinc-300 mb-1">
+              ⚡ Contexto del momento
+            </label>
+            <p className="text-zinc-500 text-xs mb-2">La IA prioriza esto sobre todo lo del perfil. Stock de hoy, precios actuales, promociones activas, excepciones. Escribí como quieras.</p>
+            <textarea
+              id="gen-contexto"
+              value={contexto}
+              onChange={e => setContexto(e.target.value)}
+              placeholder={"Ej: tenemos el Nike Air Force 1 blanco talle 42 a 350mil, sin talle 40. Hacemos envíos hoy hasta las 18hs. Aceptamos Tigo Money."}
+              maxLength={500}
+              rows={3}
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3
+                         text-white placeholder-zinc-600 text-sm resize-none
+                         focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand
+                         transition-colors"
+            />
+            <p className="text-right text-xs text-zinc-600 mt-1">{contexto.length}/500</p>
+          </div>
+        )}
 
         <button
           type="submit"
@@ -207,6 +210,9 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
       </div>
 
       {/* Response */}
+      {respuesta && (
+        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Resultado</p>
+      )}
       {respuesta && (
         <div ref={respuestaRef} aria-label="Respuesta generada" className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
           <div className="px-4 pt-3 pb-1">
