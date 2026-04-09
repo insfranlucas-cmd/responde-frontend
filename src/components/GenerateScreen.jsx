@@ -77,11 +77,14 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
           </div>
           <span className="text-white font-semibold">RESPONDE</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-zinc-500 text-xs">{initialData.user}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-zinc-500 text-xs hidden sm:inline">{initialData.user}</span>
           <button
             onClick={onLogout}
-            className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
+            className="flex items-center justify-center min-h-[44px] px-3
+                       text-zinc-400 text-xs font-medium
+                       border border-zinc-700 hover:border-zinc-500 hover:text-zinc-200
+                       rounded-lg transition-colors"
           >
             Salir
           </button>
@@ -90,20 +93,24 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
 
       {/* Perfil + Usage — tarjeta unificada */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 mb-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate">
+        <div className="flex items-center justify-between mb-3 gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xl font-bold text-brand truncate leading-tight">
               {profile?.nombre || 'Sin perfil configurado'}
             </p>
-            <p className="text-xs text-zinc-500 mt-0.5 truncate">
+            <p className="text-xs text-zinc-500 mt-1 truncate">
               {profile?.rubro || 'Completá tu perfil para mejores respuestas'}
             </p>
           </div>
           <button
             onClick={onEditProfile}
-            className="text-xs font-medium text-brand hover:text-brand-dark transition-colors shrink-0 ml-4 mt-0.5"
+            className="flex items-center justify-center shrink-0
+                       min-h-[44px] min-w-[44px] px-3
+                       text-xs font-semibold text-zinc-300
+                       border border-zinc-700 hover:border-zinc-500 hover:text-white
+                       rounded-lg transition-colors"
           >
-            Editar →
+            Editar
           </button>
         </div>
         <div className="space-y-1.5">
@@ -152,7 +159,7 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
       {/* Input form */}
       <form onSubmit={handleGenerate} className="space-y-3 mb-5">
         <div>
-          <label htmlFor="gen-mensaje" className="block text-sm font-medium text-zinc-300 mb-2">
+          <label htmlFor="gen-mensaje" className="block text-base font-semibold text-white mb-2">
             Mensaje del cliente
           </label>
           <textarea
@@ -162,7 +169,7 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
             placeholder="Pegá o escribí el mensaje que recibiste por WhatsApp..."
             maxLength={500}
             rows={4}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3
                        text-white placeholder-zinc-600 text-sm resize-none
                        focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand
                        transition-colors"
@@ -173,10 +180,17 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
         <button
           type="button"
           onClick={() => setShowContexto(v => !v)}
-          className="flex items-center gap-1.5 text-zinc-400 text-sm hover:text-zinc-200 transition-colors"
+          className="flex items-center gap-2 min-h-[44px] px-3 -mx-3
+                     text-zinc-400 text-sm hover:text-zinc-200 transition-colors
+                     rounded-lg hover:bg-zinc-800/50"
         >
-          <span className="font-medium">{showContexto ? '−' : '+'}</span>
-          <span className="underline underline-offset-2 decoration-zinc-600">
+          <span
+            className="w-5 h-5 flex items-center justify-center rounded-full
+                       border border-zinc-700 text-xs font-bold shrink-0"
+          >
+            {showContexto ? '−' : '+'}
+          </span>
+          <span>
             {showContexto ? 'Ocultar contexto' : 'Agregar contexto del momento'}
           </span>
           {!showContexto && <span className="text-zinc-600 text-xs">(opcional)</span>}
@@ -208,8 +222,10 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
           type="submit"
           disabled={loading || !mensaje.trim() || usage.remaining === 0}
           className="w-full bg-brand hover:bg-brand-dark disabled:bg-zinc-800 disabled:text-zinc-600
-                     disabled:cursor-not-allowed text-black font-semibold rounded-xl py-3 text-sm
-                     transition-colors"
+                     disabled:cursor-not-allowed disabled:shadow-none
+                     text-black font-bold rounded-xl py-4 text-base
+                     shadow-lg shadow-brand/25 hover:shadow-brand/40
+                     transition-all"
         >
           {loading ? 'Generando...' : '⚡ Generar respuesta'}
         </button>
