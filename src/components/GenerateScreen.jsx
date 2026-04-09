@@ -88,13 +88,10 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
           style={{ height: '64px', padding: '0 20px' }}
         >
           <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}
-            >
-              <span className="text-black text-sm font-syne font-bold">R</span>
+            <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center shrink-0">
+              <span className="text-black text-sm font-bold">R</span>
             </div>
-            <span className="font-syne font-bold text-white text-lg tracking-tight">RESPONDE</span>
+            <span className="font-semibold text-white text-base">RESPONDE</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -127,8 +124,13 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
           <div className="flex items-start justify-between gap-4 mb-5">
             <div className="min-w-0 flex-1">
               <h2
-                className="font-syne font-bold text-[#22c55e] truncate leading-tight"
-                style={{ fontSize: '24px' }}
+                className="font-bold text-white leading-tight"
+                style={{
+                  fontSize: 'clamp(15px, 4vw, 20px)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
               >
                 {profile?.nombre || 'Sin perfil configurado'}
               </h2>
