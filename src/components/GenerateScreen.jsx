@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import { generateResponse } from '../api';
-import UsageBar from './UsageBar';
 import ReportButton from './ReportButton';
 
 export default function GenerateScreen({ accessCode, initialData, profile, welcome, onEditProfile, onLogout }) {
@@ -12,7 +11,6 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
   const [copied, setCopied] = useState(false);
   const respuestaRef = useRef(null);
   const [usage, setUsage] = useState(initialData.usage);
-  const [showWelcome, setShowWelcome] = useState(!!welcome);
   const [showContexto, setShowContexto] = useState(false);
   const [showProfileBanner, setShowProfileBanner] = useState(() => {
     const p = profile || {};
@@ -65,6 +63,9 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const usagePct = Math.min((usage.used / usage.limit) * 100, 100);
+  const almostFull = usage.remaining <= 10;
+
   return (
     <main id="main-content" className="min-h-screen flex flex-col px-4 py-6 max-w-lg mx-auto w-full">
 
@@ -87,59 +88,70 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
         </div>
       </header>
 
-      {/* Banner bienvenida */}
-      {showWelcome && welcome?.type === 'returning' && (
-        <div className="flex items-start justify-between bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 mb-4">
-          <div>
-            <p className="text-white text-sm font-medium">Bienvenido de nuevo a RESPONDE</p>
-            <p className="text-zinc-400 text-xs mt-0.5">
-              Te quedan <strong className="text-white">{welcome.remaining}</strong> generaciones disponibles.
+      {/* Perfil + Usage — tarjeta unificada */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 mb-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white truncate">
+              {profile?.nombre || 'Sin perfil configurado'}
+            </p>
+            <p className="text-xs text-zinc-500 mt-0.5 truncate">
+              {profile?.rubro || 'Completá tu perfil para mejores respuestas'}
             </p>
           </div>
-          <button onClick={() => setShowWelcome(false)} className="text-zinc-600 hover:text-zinc-400 text-lg leading-none ml-3">×</button>
+          <button
+            onClick={onEditProfile}
+            className="text-xs font-medium text-brand hover:text-brand-dark transition-colors shrink-0 ml-4 mt-0.5"
+          >
+            Editar →
+          </button>
         </div>
-      )}
-
-      {/* Perfil chip */}
-      <button
-        onClick={onEditProfile}
-        className="w-full bg-zinc-900 border border-zinc-700 hover:border-zinc-600
-                   rounded-xl px-4 py-3 mb-4 text-left transition-colors"
-      >
-        <p className="text-sm font-medium text-zinc-300">✏ Editar perfil de mi negocio</p>
-        <p className="text-xs text-zinc-500 mt-0.5">{profile?.nombre || 'Sin perfil configurado'}</p>
-      </button>
+        <div className="space-y-1.5">
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-zinc-500">
+              Generaciones · <span className="text-zinc-400 font-medium">{initialData.plan}</span>
+            </span>
+            <span className={almostFull ? 'text-red-400 font-semibold' : 'text-zinc-300 font-medium'}>
+              {usage.remaining} restante{usage.remaining !== 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="w-full bg-zinc-800 rounded-full h-2">
+            <div
+              className={`h-2 rounded-full transition-all duration-500 ${almostFull ? 'bg-red-500' : 'bg-brand'}`}
+              style={{ width: `${usagePct}%` }}
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Banner: perfil incompleto */}
       {showProfileBanner && (
-        <div className="flex items-center justify-between bg-yellow-950/60 border border-yellow-800/60
+        <div className="flex items-center justify-between bg-brand/10 border border-brand/25
                         rounded-xl px-4 py-3 mb-4 gap-3">
-          <p className="text-yellow-200 text-xs leading-snug flex-1">
-            🚀 <strong>Mejorá tus respuestas</strong> — Completá tu perfil para que la IA conozca mejor tu negocio
+          <p className="text-zinc-300 text-xs leading-snug flex-1">
+            <strong className="text-white">Mejorá tus respuestas</strong> — completá tu perfil para que la IA conozca tu negocio.
           </p>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onEditProfile}
-              className="bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-semibold
-                         px-3 py-1.5 rounded-lg transition-colors">
-              Completar →
+            <button
+              onClick={onEditProfile}
+              className="bg-brand hover:bg-brand-dark text-black text-xs font-semibold
+                         px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Completar
             </button>
-            <button onClick={() => setShowProfileBanner(false)}
-              className="text-yellow-700 hover:text-yellow-500 text-lg leading-none transition-colors">
+            <button
+              onClick={() => setShowProfileBanner(false)}
+              className="text-zinc-500 hover:text-zinc-300 text-lg leading-none transition-colors"
+            >
               ×
             </button>
           </div>
         </div>
       )}
 
-      {/* Usage bar */}
-      <div className="mb-5">
-        <UsageBar usage={usage} plan={initialData.plan} />
-      </div>
-
       {/* Input form */}
       <form onSubmit={handleGenerate} className="space-y-3 mb-5">
         <div>
-          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Paso 1 — Mensaje del cliente</p>
           <label htmlFor="gen-mensaje" className="block text-sm font-medium text-zinc-300 mb-2">
             Mensaje del cliente
           </label>
@@ -161,23 +173,26 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
         <button
           type="button"
           onClick={() => setShowContexto(v => !v)}
-          className="text-zinc-500 text-sm hover:text-zinc-300 transition-colors"
+          className="flex items-center gap-1.5 text-zinc-400 text-sm hover:text-zinc-200 transition-colors"
         >
-          {showContexto ? '− Ocultar contexto' : '+ Agregar contexto del momento (opcional)'}
+          <span className="font-medium">{showContexto ? '−' : '+'}</span>
+          <span className="underline underline-offset-2 decoration-zinc-600">
+            {showContexto ? 'Ocultar contexto' : 'Agregar contexto del momento'}
+          </span>
+          {!showContexto && <span className="text-zinc-600 text-xs">(opcional)</span>}
         </button>
 
         {showContexto && (
           <div>
-            <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 mt-3">Paso 2 — Contexto del momento</p>
             <label htmlFor="gen-contexto" className="block text-sm font-medium text-zinc-300 mb-1">
               ⚡ Contexto del momento
             </label>
-            <p className="text-zinc-500 text-xs mb-2">La IA prioriza esto sobre todo lo del perfil. Stock de hoy, precios actuales, promociones activas, excepciones. Escribí como quieras.</p>
+            <p className="text-zinc-500 text-xs mb-2">La IA prioriza esto sobre todo lo del perfil. Stock de hoy, precios actuales, promociones activas, excepciones.</p>
             <textarea
               id="gen-contexto"
               value={contexto}
               onChange={e => setContexto(e.target.value)}
-              placeholder={"Ej: tenemos el Nike Air Force 1 blanco talle 42 a 350mil, sin talle 40. Hacemos envíos hoy hasta las 18hs. Aceptamos Tigo Money."}
+              placeholder="Ej: tenemos el Nike Air Force 1 blanco talle 42 a 350mil, sin talle 40. Hacemos envíos hoy hasta las 18hs."
               maxLength={500}
               rows={3}
               className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3
@@ -211,13 +226,8 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
 
       {/* Response */}
       {respuesta && (
-        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Resultado</p>
-      )}
-      {respuesta && (
-        <div ref={respuestaRef} aria-label="Respuesta generada" className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-          <div className="px-4 pt-3 pb-1">
-            <span className="text-xs font-medium text-zinc-400">Respuesta generada</span>
-          </div>
+        <div ref={respuestaRef} aria-label="Respuesta generada"
+             className="bg-brand/5 border border-brand/30 rounded-xl overflow-hidden mb-6">
           <div className="px-4 py-4">
             <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{respuesta}</p>
           </div>
@@ -232,7 +242,9 @@ export default function GenerateScreen({ accessCode, initialData, profile, welco
               href={`https://wa.me/?text=${encodeURIComponent(respuesta)}`}
               target="_blank"
               rel="noreferrer"
-              className="block w-full bg-transparent border border-green-600 text-green-500 font-semibold rounded-xl py-3 text-sm text-center transition-colors hover:bg-green-950"
+              className="block w-full bg-transparent border border-green-500 text-green-400
+                         font-semibold rounded-xl py-3 text-sm text-center transition-colors
+                         hover:bg-green-950/50"
             >
               Abrir en WhatsApp
             </a>
