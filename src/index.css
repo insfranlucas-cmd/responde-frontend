@@ -3,18 +3,27 @@
 @tailwind utilities;
 
 :root {
-  --brand: #22c55e;
-  --brand-dark: #16a34a;
-  --surface-0: #0a0a0a;
-  --surface-1: #1a1a1a;
-  --surface-2: #2a2a2a;
-  --text-primary: #ffffff;
-  --text-secondary: #a3a3a3;
-  --text-tertiary: #737373;
+  --brand-primary: #00D66C;
+  --brand-dark: #00A854;
+  --brand-light: #4ADE80;
+  --brand: #00D66C;
+  --surface-0: #000000;
+  --surface-1: #0F0F0F;
+  --surface-2: #1A1A1A;
+  --surface-3: #262626;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B3B3B3;
+  --text-tertiary: #808080;
+  --text-disabled: #4D4D4D;
   --border: rgba(255, 255, 255, 0.1);
   --border-strong: rgba(255, 255, 255, 0.18);
-  --danger: #ef4444;
-  --warning: #f59e0b;
+  --danger: #FF4444;
+  --warning: #FFB020;
+  --success: #00D66C;
+  --shadow-sm: 0 2px 8px rgba(0, 214, 108, 0.15);
+  --shadow-md: 0 4px 16px rgba(0, 214, 108, 0.20);
+  --shadow-lg: 0 8px 24px rgba(0, 214, 108, 0.25);
+  --shadow-xl: 0 12px 32px rgba(0, 214, 108, 0.30);
 }
 
 *, *::before, *::after {
@@ -23,20 +32,21 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  background-color: #0a0a0a;
+  background-color: #000000;
   color: #ffffff;
   font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Focus ring global — WCAG 2.4.7 */
+/* Focus ring — WCAG 2.4.7 */
 :focus-visible {
-  outline: 3px solid #22c55e;
+  outline: 3px solid #00D66C;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -47,24 +57,63 @@ a:active {
   transform: scale(0.98);
 }
 
-/* iOS zoom prevention on inputs */
+/* iOS zoom prevention */
 input, textarea, select {
   touch-action: manipulation;
 }
 
-/* Smooth scroll */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom scrollbar (webkit) */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #0F0F0F;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: #262626;
   border-radius: 999px;
+}
+
+/* ─── Animations ─── */
+
+@keyframes shimmer {
+  to { left: 100%; }
+}
+
+@keyframes pulse-green {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 214, 108, 0.7); }
+  70%  { box-shadow: 0 0 0 20px rgba(0, 214, 108, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 214, 108, 0); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Utility classes used in GenerateScreen ─── */
+
+.btn-generating {
+  background: linear-gradient(135deg, #00A854 0%, #008844 100%) !important;
+  animation: pulse-green 1.5s infinite;
+}
+
+.response-appear {
+  animation: fade-in-up 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
 }

@@ -85,26 +85,38 @@ export default function App() {
     setScreen('login');
   }
 
+  const skipLink = (
+    <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:text-black focus:px-4 focus:py-2 focus:rounded">
+      Saltar al contenido
+    </a>
+  );
+
   if (screen === 'loading') return null;
-  if (screen === 'login')   return <LoginScreen onLogin={handleLogin} />;
+  if (screen === 'login')   return <>{skipLink}<LoginScreen onLogin={handleLogin} /></>;
   if (screen === 'profile') return (
-    <ProfileScreen
-      accessCode={session.accessCode}
-      initialProfile={profile}
-      welcome={welcome}
-      onSaved={handleProfileSaved}
-      onSkip={profile ? () => setScreen('generate') : null}
-    />
+    <>
+      {skipLink}
+      <ProfileScreen
+        accessCode={session.accessCode}
+        initialProfile={profile}
+        welcome={welcome}
+        onSaved={handleProfileSaved}
+        onSkip={profile ? () => setScreen('generate') : null}
+      />
+    </>
   );
 
   return (
-    <GenerateScreen
-      accessCode={session.accessCode}
-      initialData={session.data}
-      profile={profile}
-      welcome={welcome}
-      onEditProfile={() => setScreen('profile')}
-      onLogout={handleLogout}
-    />
+    <>
+      {skipLink}
+      <GenerateScreen
+        accessCode={session.accessCode}
+        initialData={session.data}
+        profile={profile}
+        welcome={welcome}
+        onEditProfile={() => setScreen('profile')}
+        onLogout={handleLogout}
+      />
+    </>
   );
 }

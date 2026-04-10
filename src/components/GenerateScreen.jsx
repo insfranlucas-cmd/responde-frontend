@@ -1,25 +1,29 @@
 import { useState, useRef } from 'react';
+import { LogOut, Pencil, Zap, MessageCircle, Copy, RotateCcw, Plus, Minus } from 'lucide-react';
 import { generateResponse } from '../api';
 import ReportButton from './ReportButton';
 
 export default function GenerateScreen({ accessCode, initialData, profile, onEditProfile, onLogout }) {
-  const [mensaje, setMensaje] = useState('');
-  const [contexto, setContexto] = useState('');
-  const [respuesta, setRespuesta] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
-  const respuestaRef = useRef(null);
-  const [usage, setUsage] = useState(initialData.usage);
+  const [mensaje, setMensaje]       = useState('');
+  const [contexto, setContexto]     = useState('');
+  const [respuesta, setRespuesta]   = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
+  const [copied, setCopied]         = useState(false);
+  const respuestaRef                = useRef(null);
+  const [usage, setUsage]           = useState(initialData.usage);
   const [showContexto, setShowContexto] = useState(false);
-  const [showBanner, setShowBanner] = useState(() => {
+
+  // Profile completeness — show CTA if < 6 out of 7 fields filled (~80%)
+  const profileIncomplete = (() => {
     const p = profile || {};
-    const filled = [p.nombre, p.rubro, p.descripcion, p.horarios, p.pagos]
-      .filter(v => typeof v === 'string' && v.trim().length > 0).length
+    const filled =
+      [p.nombre, p.rubro, p.descripcion, p.horarios, p.pagos]
+        .filter(v => typeof v === 'string' && v.trim().length > 0).length
       + (Array.isArray(p.preguntas_frecuentes) && p.preguntas_frecuentes.length > 0 ? 1 : 0)
       + (Array.isArray(p.items) && p.items.length > 0 ? 1 : 0);
-    return filled < 5;
-  });
+    return filled < 6;
+  })();
 
   async function handleGenerate(e) {
     e.preventDefault();
@@ -54,6 +58,7 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
   async function handleCopy() {
     if (!respuesta) return;
     await navigator.clipboard.writeText(respuesta);
+    if (navigator.vibrate) navigator.vibrate(50);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -67,17 +72,22 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
   }
 
   const usagePct = Math.min((usage.used / usage.limit) * 100, 100);
-  const usageColor = usagePct >= 90 ? '#ef4444' : usagePct >= 80 ? '#f59e0b' : '#22c55e';
+  const progressGradient =
+    usagePct >= 90 ? 'linear-gradient(90deg, #FF4444, #CC0000)'
+    : usagePct >= 80 ? 'linear-gradient(90deg, #FFB020, #FF8C00)'
+    : 'linear-gradient(90deg, #00D66C, #00A854)';
+  const usageCountColor =
+    usagePct >= 90 ? '#FF4444' : usagePct >= 80 ? '#FFB020' : '#00D66C';
   const canGenerate = !loading && mensaje.trim().length > 0 && usage.remaining > 0;
 
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0a', fontFamily: '"DM Sans", system-ui, sans-serif' }}>
+    <div className="min-h-screen" style={{ background: '#000000', fontFamily: '"DM Sans", system-ui, sans-serif' }}>
 
       {/* Header */}
       <header
         className="sticky top-0 z-20"
         style={{
-          background: 'rgba(10,10,10,0.9)',
+          background: 'rgba(0,0,0,0.9)',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
@@ -88,21 +98,25 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
           style={{ height: '64px', padding: '0 20px' }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center shrink-0">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: '#00D66C' }}
+            >
               <span className="text-black text-sm font-bold">R</span>
             </div>
             <span className="font-semibold text-white text-base">RESPONDE</span>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-[#737373] text-xs hidden sm:block">{initialData.user}</span>
+            <span className="text-[#808080] text-xs hidden sm:block">{initialData.user}</span>
             <button
               onClick={onLogout}
-              className="flex items-center justify-center min-h-[44px] px-4 rounded-lg
-                         text-[#a3a3a3] text-sm font-medium transition-all duration-200
+              className="flex items-center justify-center px-4 rounded-lg
+                         text-[#B3B3B3] text-sm font-medium transition-all duration-200
                          hover:text-white"
-              style={{ border: '1px solid rgba(255,255,255,0.12)' }}
+              style={{ border: '1px solid rgba(255,255,255,0.12)', minHeight: '44px', gap: '6px' }}
             >
+              <LogOut size={18} />
               Salir
             </button>
           </div>
@@ -112,115 +126,150 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
       {/* Content */}
       <main id="main-content" className="max-w-2xl mx-auto px-4 py-6 md:px-6 space-y-4 pb-20">
 
-        {/* Profile + Usage card */}
+        {/* ── Profile card ── */}
         <div
           className="rounded-xl p-6"
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: '#0F0F0F',
+            border: '1px solid rgba(255,255,255,0.08)',
+            position: 'relative',
           }}
         >
-          {/* Business identity */}
-          <div className="flex items-start justify-between gap-4 mb-5">
-            <div className="min-w-0 flex-1">
-              <h2
-                className="font-bold text-white leading-tight"
-                style={{
-                  fontSize: 'clamp(15px, 4vw, 20px)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {profile?.nombre || 'Sin perfil configurado'}
-              </h2>
-              <p
-                className="text-[#a3a3a3] mt-1 leading-snug"
-                style={{
-                  fontSize: '14px',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {profile?.descripcion || profile?.rubro || 'Completá tu perfil para mejores respuestas'}
-              </p>
-            </div>
-            <button
-              onClick={onEditProfile}
-              className="flex items-center justify-center shrink-0 min-h-[44px] px-4 rounded-lg
-                         text-sm font-medium text-[#a3a3a3] transition-all duration-200
-                         hover:text-white"
-              style={{ border: '1px solid rgba(255,255,255,0.12)' }}
-            >
-              Editar perfil
-            </button>
-          </div>
+          {/* Edit icon — top-right corner */}
+          <button
+            onClick={onEditProfile}
+            aria-label="Editar perfil del negocio"
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              width: '36px',
+              height: '36px',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: '#808080',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(0, 214, 108, 0.08)';
+              e.currentTarget.style.borderColor = 'rgba(0, 214, 108, 0.3)';
+              e.currentTarget.style.color = '#00D66C';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+              e.currentTarget.style.color = '#808080';
+            }}
+          >
+            <Pencil size={16} />
+          </button>
+
+          {/* Business name */}
+          <h2
+            style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#00D66C',
+              letterSpacing: '-0.02em',
+              lineHeight: '1.2',
+              marginBottom: '8px',
+              paddingRight: '50px',
+            }}
+          >
+            {profile?.nombre || 'Sin perfil configurado'}
+          </h2>
+
+          {/* Business description */}
+          <p
+            style={{
+              fontSize: '14px',
+              color: '#B3B3B3',
+              lineHeight: '1.5',
+              marginBottom: '20px',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}
+          >
+            {profile?.descripcion || profile?.rubro || 'Completá tu perfil para mejores respuestas'}
+          </p>
 
           {/* Usage */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[13px] text-[#737373]">
-                ⚡ Generaciones · <span className="text-[#a3a3a3] font-medium">{initialData.plan}</span>
+          <div>
+            {/* Header row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '13px', color: '#808080' }}>
+                ⚡ Generaciones · <span style={{ color: '#B3B3B3', fontWeight: '500' }}>{initialData.plan}</span>
               </span>
-              <span className="text-[13px] font-semibold" style={{ color: usageColor }}>
+              <span style={{ fontSize: '18px', fontWeight: '700', color: usageCountColor }}>
                 {usage.used} / {usage.limit}
               </span>
             </div>
-            <div className="rounded-full overflow-hidden" style={{ height: '8px', background: '#2a2a2a' }}>
+
+            {/* Progress bar */}
+            <div
+              style={{
+                height: '10px',
+                background: 'rgba(255,255,255,0.08)',
+                borderRadius: '999px',
+                overflow: 'hidden',
+                position: 'relative',
+                marginBottom: '8px',
+              }}
+            >
               <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${usagePct}%`, background: usageColor }}
+                className="progress-shimmer"
+                style={{
+                  height: '100%',
+                  width: `${usagePct}%`,
+                  background: progressGradient,
+                  borderRadius: '999px',
+                  transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
               />
             </div>
-            <p className="text-[12px]" style={{ color: '#737373' }}>
-              {usage.remaining} restante{usage.remaining !== 1 ? 's' : ''}
-              {usagePct >= 90 && ' · ⚠️ Límite casi alcanzado'}
+
+            {/* Meta */}
+            <p style={{ fontSize: '12px', color: '#808080', display: 'flex', gap: '12px' }}>
+              <span>{usage.remaining} restante{usage.remaining !== 1 ? 's' : ''}</span>
+              {usagePct >= 90 && <span>⏰ Límite casi alcanzado</span>}
             </p>
           </div>
         </div>
 
-        {/* Profile incomplete banner */}
-        {showBanner && (
-          <div
-            className="rounded-xl p-4 flex items-center gap-4"
+        {/* ── Complete profile CTA (only if < 80% filled) ── */}
+        {profileIncomplete && (
+          <button
+            onClick={onEditProfile}
+            className="transition-all duration-200"
             style={{
-              background: 'rgba(34,197,94,0.05)',
-              border: '1px solid rgba(34,197,94,0.2)',
+              width: '100%',
+              minHeight: '48px',
+              padding: '14px 24px',
+              background: 'rgba(255, 176, 32, 0.1)',
+              border: '2px solid rgba(255, 176, 32, 0.3)',
+              color: '#FFB020',
+              fontSize: '14px',
+              fontWeight: '600',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontFamily: '"DM Sans", system-ui, sans-serif',
             }}
           >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">Mejorá tus respuestas</p>
-              <p className="text-xs text-[#a3a3a3] mt-0.5">
-                Completá tu perfil para que la IA conozca tu negocio.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={onEditProfile}
-                className="flex items-center justify-center min-h-[36px] px-3 rounded-lg
-                           text-xs font-semibold text-black transition-all"
-                style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}
-              >
-                Completar
-              </button>
-              <button
-                onClick={() => setShowBanner(false)}
-                aria-label="Cerrar"
-                className="flex items-center justify-center w-8 h-8 rounded-lg
-                           text-[#737373] hover:text-white transition-colors text-lg"
-              >
-                ×
-              </button>
-            </div>
-          </div>
+            ⚠️ Completar perfil para respuestas más precisas
+          </button>
         )}
 
-        {/* Form */}
+        {/* ── Form ── */}
         <form onSubmit={handleGenerate} className="space-y-4">
 
-          {/* Message input */}
+          {/* Message textarea */}
           <div>
             <label
               htmlFor="gen-mensaje"
@@ -239,10 +288,10 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
               rows={5}
               style={{
                 width: '100%',
-                background: 'rgba(255,255,255,0.03)',
-                border: `2px solid ${mensaje.length > 0 ? '#22c55e' : 'rgba(255,255,255,0.1)'}`,
-                boxShadow: mensaje.length > 0 ? '0 0 0 4px rgba(34,197,94,0.08)' : 'none',
-                borderRadius: '8px',
+                background: '#0F0F0F',
+                border: `2px solid ${mensaje.length > 0 ? '#00D66C' : 'rgba(255,255,255,0.1)'}`,
+                boxShadow: mensaje.length > 0 ? '0 0 0 4px rgba(0, 214, 108, 0.08)' : 'none',
+                borderRadius: '12px',
                 padding: '16px',
                 fontSize: '16px',
                 color: '#ffffff',
@@ -254,30 +303,31 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
                 opacity: loading ? 0.6 : 1,
                 fontFamily: '"DM Sans", system-ui, sans-serif',
               }}
-              className="placeholder-[#737373]"
+              className="placeholder-[#808080]"
             />
-            <p className="text-right text-xs text-[#737373] mt-1">{mensaje.length}/500</p>
+            <p className="text-right text-xs mt-1" style={{ color: '#808080' }}>{mensaje.length}/500</p>
           </div>
 
           {/* Context toggle */}
           <button
             type="button"
             onClick={() => setShowContexto(v => !v)}
-            className="flex items-center gap-2 w-full min-h-[44px] px-3 -mx-3
-                       text-[#a3a3a3] text-sm hover:text-white transition-all duration-200
-                       rounded-lg hover:bg-[rgba(255,255,255,0.04)]"
+            className="flex items-center gap-2 w-full -mx-3 px-3 rounded-lg transition-all duration-200"
+            style={{ color: '#B3B3B3', fontSize: '14px', minHeight: '44px' }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#ffffff'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#B3B3B3'; }}
           >
             <span
-              className="w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold shrink-0"
+              className="w-5 h-5 flex items-center justify-center rounded-full shrink-0"
               style={{ border: '1px solid rgba(255,255,255,0.2)' }}
             >
-              {showContexto ? '−' : '+'}
+              {showContexto ? <Minus size={12} /> : <Plus size={12} />}
             </span>
             <span className="font-medium">
               {showContexto ? 'Ocultar contexto adicional' : 'Agregar contexto del momento'}
             </span>
             {!showContexto && (
-              <span className="text-[#737373] text-xs">(opcional)</span>
+              <span style={{ color: '#808080', fontSize: '12px' }}>(opcional)</span>
             )}
           </button>
 
@@ -285,11 +335,12 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
             <div>
               <label
                 htmlFor="gen-contexto"
-                className="block text-sm font-medium text-[#a3a3a3] mb-1"
+                className="block font-medium mb-1"
+                style={{ fontSize: '14px', color: '#B3B3B3' }}
               >
                 Contexto del momento
               </label>
-              <p className="text-xs text-[#737373] mb-2">
+              <p className="text-xs mb-2" style={{ color: '#808080' }}>
                 Stock actual, precios de hoy, promociones. La IA lo prioriza sobre todo.
               </p>
               <textarea
@@ -302,9 +353,9 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
                 rows={3}
                 style={{
                   width: '100%',
-                  background: 'rgba(255,255,255,0.03)',
+                  background: '#0F0F0F',
                   border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   padding: '16px',
                   fontSize: '16px',
                   color: '#ffffff',
@@ -313,9 +364,9 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
                   touchAction: 'manipulation',
                   fontFamily: '"DM Sans", system-ui, sans-serif',
                 }}
-                className="placeholder-[#737373] focus:border-brand transition-colors"
+                className="placeholder-[#808080] focus:border-[#00D66C] transition-colors"
               />
-              <p className="text-right text-xs text-[#737373] mt-1">{contexto.length}/500</p>
+              <p className="text-right text-xs mt-1" style={{ color: '#808080' }}>{contexto.length}/500</p>
             </div>
           )}
 
@@ -323,28 +374,41 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
           <button
             type="submit"
             disabled={!canGenerate}
+            className={loading ? 'btn-generating' : ''}
             style={{
               width: '100%',
-              padding: '16px 24px',
-              borderRadius: '12px',
+              minHeight: '56px',
+              padding: '18px 24px',
+              borderRadius: '16px',
               fontSize: '16px',
-              fontWeight: '600',
+              fontWeight: '700',
+              border: 'none',
               cursor: canGenerate ? 'pointer' : 'not-allowed',
               background: canGenerate
-                ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
-                : '#2a2a2a',
-              color: canGenerate ? '#000000' : '#737373',
-              boxShadow: canGenerate ? '0 4px 14px rgba(34,197,94,0.25)' : 'none',
-              border: 'none',
-              transition: 'all 0.2s ease',
+                ? 'linear-gradient(135deg, #00D66C 0%, #00A854 100%)'
+                : '#1A1A1A',
+              color: canGenerate ? '#000000' : '#4D4D4D',
+              boxShadow: canGenerate ? '0 6px 20px rgba(0, 214, 108, 0.35)' : 'none',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
               fontFamily: '"DM Sans", system-ui, sans-serif',
+            }}
+            onMouseEnter={e => {
+              if (!canGenerate || loading) return;
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 214, 108, 0.45)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = canGenerate ? '0 6px 20px rgba(0, 214, 108, 0.35)' : 'none';
             }}
           >
             {loading ? (
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <Spinner /> Generando...
-              </span>
-            ) : '⚡ Generar respuesta'}
+              <><Spinner /> Generando...</>
+            ) : <><Zap size={20} /> Generar respuesta</>}
           </button>
 
         </form>
@@ -355,91 +419,134 @@ export default function GenerateScreen({ accessCode, initialData, profile, onEdi
             <div
               className="rounded-xl px-4 py-4"
               style={{
-                background: 'rgba(239,68,68,0.08)',
-                border: '1px solid rgba(239,68,68,0.3)',
+                background: 'rgba(255,68,68,0.08)',
+                border: '1px solid rgba(255,68,68,0.3)',
               }}
             >
-              <p className="text-[#ef4444] text-sm">⚠️ {error}</p>
+              <p className="text-sm" style={{ color: '#FF4444' }}>⚠️ {error}</p>
             </div>
           )}
         </div>
 
-        {/* Response */}
+        {/* ── Response card ── */}
         {respuesta && (
           <div
             ref={respuestaRef}
             aria-label="Respuesta generada"
-            className="rounded-xl overflow-hidden"
+            className="response-appear"
             style={{
-              background: 'rgba(34,197,94,0.04)',
-              border: '1px solid rgba(34,197,94,0.2)',
+              background: 'linear-gradient(to bottom, rgba(0, 214, 108, 0.08) 0%, rgba(0, 214, 108, 0.02) 100%)',
+              border: '2px solid rgba(0, 214, 108, 0.3)',
+              borderRadius: '16px',
+              padding: '24px',
+              marginTop: '8px',
+              boxShadow: '0 8px 32px rgba(0, 214, 108, 0.15)',
             }}
           >
             {/* Response header */}
-            <div
-              className="flex items-center justify-between px-5 py-3"
-              style={{ borderBottom: '1px solid rgba(34,197,94,0.12)' }}
-            >
-              <span className="text-sm font-semibold text-white">Respuesta generada</span>
-              <button
-                onClick={handleCopy}
-                className="flex items-center gap-1.5 min-h-[36px] px-3 rounded-lg
-                           text-sm font-medium transition-all duration-200"
-                style={{
-                  color: copied ? '#22c55e' : '#a3a3a3',
-                  background: copied ? 'rgba(34,197,94,0.1)' : 'transparent',
-                }}
-              >
-                {copied ? '✓ Copiado' : '📋 Copiar'}
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <span style={{ fontSize: '16px', fontWeight: '600', color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ✨ Respuesta generada
+              </span>
             </div>
 
-            {/* Response text */}
-            <div className="px-5 py-5">
+            {/* Response text — with left border accent */}
+            <div
+              style={{
+                background: '#0F0F0F',
+                borderLeft: '4px solid #00D66C',
+                padding: '20px',
+                borderRadius: '12px',
+                marginBottom: '20px',
+              }}
+            >
               <p
-                className="text-white whitespace-pre-wrap"
-                style={{ fontSize: '16px', lineHeight: '1.65' }}
+                style={{
+                  fontSize: '16px',
+                  lineHeight: '1.6',
+                  color: '#FFFFFF',
+                  whiteSpace: 'pre-wrap',
+                  wordWrap: 'break-word',
+                  margin: 0,
+                }}
               >
                 {respuesta}
               </p>
             </div>
 
-            {/* Action buttons */}
-            <div className="px-5 pb-5 space-y-3">
-              <button
-                onClick={handleCopy}
-                className="w-full rounded-xl font-semibold text-sm text-black transition-all"
-                style={{
-                  padding: '14px 24px',
-                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                  boxShadow: '0 4px 14px rgba(34,197,94,0.25)',
-                }}
-              >
-                {copied ? '✓ Copiado' : '📋 Copiar respuesta'}
-              </button>
-
+            {/* Action buttons — 3-column grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+              {/* WhatsApp — primary */}
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(respuesta)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center w-full rounded-xl font-semibold text-sm
-                           transition-all duration-200 min-h-[52px]"
                 style={{
-                  border: '1px solid rgba(34,197,94,0.4)',
-                  color: '#22c55e',
-                  background: 'transparent',
+                  minHeight: '48px',
+                  padding: '14px',
+                  background: '#00D66C',
+                  color: '#000000',
+                  border: '1px solid #00D66C',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease',
                 }}
               >
-                💬 Abrir en WhatsApp
+                <MessageCircle size={18} /> WhatsApp
               </a>
 
+              {/* Copy */}
+              <button
+                onClick={handleCopy}
+                style={{
+                  minHeight: '48px',
+                  padding: '14px',
+                  background: copied ? '#00A854' : '#1A1A1A',
+                  color: copied ? '#FFFFFF' : '#B3B3B3',
+                  border: `1px solid ${copied ? '#00A854' : 'rgba(255,255,255,0.1)'}`,
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontFamily: '"DM Sans", system-ui, sans-serif',
+                }}
+              >
+                {copied ? '✓ Copiado' : <><Copy size={16} /> Copiar</>}
+              </button>
+
+              {/* Nueva */}
               <button
                 onClick={handleNueva}
-                className="w-full rounded-xl text-sm font-medium text-[#a3a3a3]
-                           transition-all duration-200 hover:text-white min-h-[44px]"
-                style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+                style={{
+                  minHeight: '48px',
+                  padding: '14px',
+                  background: '#1A1A1A',
+                  color: '#B3B3B3',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontFamily: '"DM Sans", system-ui, sans-serif',
+                }}
               >
-                Nueva consulta
+                <RotateCcw size={16} /> Nueva
               </button>
             </div>
           </div>

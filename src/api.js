@@ -1,4 +1,8 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://responde-backend-production.up.railway.app';
+// En dev usa el proxy de Vite (vite.config.js) para evitar CORS.
+// En producción usa la variable de entorno o el URL directo al backend.
+const BASE_URL = import.meta.env.DEV
+  ? ''
+  : (import.meta.env.VITE_API_URL || 'https://responde-backend-production.up.railway.app');
 
 function headers(accessCode) {
   return {
@@ -11,7 +15,10 @@ export async function checkCode(accessCode) {
   const res = await fetch(`${BASE_URL}/api/usage`, {
     headers: { 'X-Access-Code': accessCode },
   });
-  if (!res.ok) throw new Error('Código inválido');
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || data.error || 'Código inválido');
+  }
   return res.json();
 }
 
