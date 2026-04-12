@@ -73,6 +73,7 @@ export default function App() {
   function handleProfileSaved(savedProfile) {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(savedProfile));
     setProfile(savedProfile);
+    setWelcome(w => w ? { ...w, type: 'returning' } : w);
     setScreen('generate');
   }
 

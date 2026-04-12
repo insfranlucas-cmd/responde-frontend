@@ -277,7 +277,7 @@ export default function ProfileScreen({ accessCode, initialProfile, welcome, onS
   const [open, setOpen] = useState({ A: true, B: false, C: false, D: false, E: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showQuickSetup, setShowQuickSetup] = useState(welcome?.type === 'first');
+  const [showQuickSetup, setShowQuickSetup] = useState(!initialProfile && welcome?.type === 'first');
   const isEdit = !!initialProfile;
   const progress = overallPct(form);
 
