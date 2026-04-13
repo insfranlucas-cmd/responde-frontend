@@ -1,5 +1,5 @@
-export default function ReportButton({ accessCode }) {
-  const msg = encodeURIComponent(`[${accessCode}] Problema: `);
+export default function ReportButton({ userEmail }) {
+  const msg = encodeURIComponent(`[${userEmail}] Problema: `);
   const url = `https://wa.me/595961417430?text=${msg}`;
 
   return (
@@ -14,11 +14,21 @@ export default function ReportButton({ accessCode }) {
                  rounded-full text-zinc-400 hover:text-white
                  transition-colors shadow-lg"
     >
-      <svg aria-hidden="true" focusable="false"
-           xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-           fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-        <line x1="4" y1="22" x2="4" y2="15"/>
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+        <line x1="4" y1="22" x2="4" y2="15" />
       </svg>
     </a>
   );
