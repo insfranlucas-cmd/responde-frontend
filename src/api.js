@@ -99,6 +99,111 @@ export async function logout(token) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// AUTENTICACIÓN POR TELÉFONO (Sprint 3)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Solicita código de verificación por SMS
+ * @param {string} phone - Número de teléfono en formato +595981234567
+ * @returns {Promise<{message: string, phone: string, expiresIn: number, mock?: boolean}>}
+ */
+export async function requestPhoneVerification(phone) {
+  const res = await fetch(`${BASE_URL}/api/auth/request-phone-verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    if (res.status === 429)
+      throw new Error(
+        data.message ||
+          "Demasiados intentos. Esperá antes de solicitar otro código.",
+      );
+    if (res.status === 400)
+      throw new Error(
+        data.message || "Formato de teléfono inválido. Debe ser +595XXXXXXXXX",
+      );
+    throw new Error(data.error || "Error al enviar código de verificación");
+  }
+  return data;
+}
+
+/**
+ * Verifica el código OTP recibido por SMS
+ * @param {string} phone - Número de teléfono
+ * @param {string} code - Código OTP de 6 dígitos
+ * @returns {Promise<{message: string, phone: string, verified: boolean}>}
+ */
+export async function verifyPhone(phone, code) {
+  const res = await fetch(`${BASE_URL}/api/auth/verify-phone`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, code }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    if (res.status === 400)
+      throw new Error(data.message || "Código incorrecto o expirado");
+    if (res.status === 404)
+      throw new Error("No hay verificación pendiente para este teléfono");
+    throw new Error(data.error || "Error al verificar código");
+  }
+  return data;
+}
+
+/**
+ * Registro de nuevo usuario con teléfono verificado
+ * @param {string} phone - Número de teléfono verificado
+ * @param {string} password - Contraseña
+ * @param {string} name - Nombre completo
+ * @returns {Promise<{token: string, user: {id: number, name: string, phone: string, plan: string}}>}
+ */
+export async function signupWithPhone(phone, password, name) {
+  const res = await fetch(`${BASE_URL}/api/auth/signup-with-phone`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, password, name }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    if (res.status === 400) {
+      if (data.message?.includes("verificar")) {
+        throw new Error("Debés verificar tu teléfono antes de crear la cuenta");
+      }
+      throw new Error(data.message || "Datos inválidos");
+    }
+    if (res.status === 409)
+      throw new Error("Este número de teléfono ya está registrado");
+    throw new Error(data.error || "Error al crear la cuenta");
+  }
+  return data;
+}
+
+/**
+ * Login con teléfono y contraseña
+ * @param {string} phone - Número de teléfono
+ * @param {string} password - Contraseña
+ * @returns {Promise<{token: string, user: {id: number, name: string, phone: string, plan: string}}>}
+ */
+export async function loginWithPhone(phone, password) {
+  const res = await fetch(`${BASE_URL}/api/auth/login-with-phone`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    if (res.status === 401)
+      throw new Error("Teléfono o contraseña incorrectos");
+    if (res.status === 403)
+      throw new Error("Tu cuenta está desactivada. Contactá a soporte.");
+    throw new Error(data.error || "Error al iniciar sesión");
+  }
+  return data;
+}
+
+// ─────────────────────────────────────────────────────────────
 // GENERACIÓN Y PERFILES
 // ─────────────────────────────────────────────────────────────
 
